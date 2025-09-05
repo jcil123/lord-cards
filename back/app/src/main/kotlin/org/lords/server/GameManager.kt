@@ -8,40 +8,62 @@ import java.util.UUID
 
 object GameManager {
     // Map of gameId, list of active games
-    private val games = ConcurrentHashMap<String, MutableList<DefaultWebSocketServerSession>>()
+    private val games = ConcurrentHashMap<String, Game>()
 
     // create a new game and add the player (create an unique ID too)
-    fun createGame(session: DefaultWebSocketServerSession): String {
+    fun createGame(session: DefaultWebSocketServerSession, name : String): String {
         val gameId = UUID.randomUUID().toString()
-        games[gameId] = mutableListOf(session)
+        var player = Player(name = name, session = session)
+        val game = Game(gameId, mutableListOf(player))
+        games[gameId] = game
         return gameId
     }
 
     // add player to game 
-    fun joinGame(gameId: String, session: DefaultWebSocketServerSession): Boolean {
-        val players = games[gameId] ?: return false
-        if (players.isEmpty()) return false // Game is gone
-        players.add(session)
+    fun joinGame(gameId: String, session: DefaultWebSocketServerSession, name : String): Boolean {
+        var player = Player(name = name, session = session)
+        val game = games[gameId] ?: return false // if game[gameId] is null return false (not found or something)
+        if (game.playerList.isEmpty() || game.started == true) return false // Game is gone
+        game.playerList.add(player)
         return true
     }
 
-    // broadcast message to all players
-    suspend fun broadcast(gameId: String, message: String) {
-        val players = games[gameId] ?: return
-        for (player in players) {
+    suspend fun receivePlay2(gameId: String, message: Frame) {
+        val game = games[gameId] ?: return
+        // only handle text/JSON frames
+        val text = when (message) {
+            is Frame.Text -> message.readText()
+            else -> return  // ignore anything else but text/JSON
+        }
+        println("Received message: $text")
+        for (player in game.playerList) {
             try {
-                player.send(Frame.Text(message))
-            } catch (_: Exception) {
-                // should do something here
+                player.session.send(Frame.Text(text))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Optional: remove player if disconnected
             }
         }
     }
 
+    suspend fun receivePlay(gameId: String, message: Frame) {
+        val game = games[gameId] ?: return
+        val text = when (message) {
+            is Frame.Text -> message.readText()
+            else -> return  // ignore anything else but text/JSON
+        }
+        game.addReceivedMessage(text)
+    }
+
+
     // Removes a session and deletes the game if empty 
     fun removeSession(gameId: String, session: DefaultWebSocketServerSession) {
-        val players = games[gameId] ?: return
-        players.remove(session)
-        if (players.isEmpty()) {
+        val game = games[gameId] ?: return
+        val player = game.playerList.find { it.session == session }
+        if (player != null) {
+            game.playerList.remove(player)
+        }
+        if (game.playerList.isEmpty()) {
             games.remove(gameId)
         }
     }
