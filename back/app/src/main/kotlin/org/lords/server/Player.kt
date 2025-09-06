@@ -5,6 +5,7 @@ import io.ktor.server.websocket.*
 class Player (
     val name : String,
     var session : DefaultWebSocketServerSession,
+    val id : String,
     var moneyPoints : Int = 20,
     var religionPoints : Int = 20,
     var militaryPoints : Int = 20,

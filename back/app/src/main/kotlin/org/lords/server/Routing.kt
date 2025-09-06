@@ -1,6 +1,7 @@
 package org.lords.server 
 
 import io.ktor.http.*
+import io.ktor.server.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.cors.routing.*
@@ -16,9 +17,15 @@ import org.slf4j.event.*
 fun Application.configureRouting() {
     routing {
 
+        get("/") {
+            call.respondText(
+                this::class.java.classLoader.getResource("index.html")!!.readText(),
+                contentType = io.ktor.http.ContentType.Text.Html
+            )
+        }
+
         webSocket("/lords/game") {
             // create a game
-            println("Client connected to game")
             val name = call.request.queryParameters["name"] ?: "Anonymous"
             val id = GameManager.createGame(this, name)
             send(Frame.Text("$name created game with id: $id"))

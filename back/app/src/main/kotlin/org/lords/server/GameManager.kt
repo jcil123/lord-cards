@@ -11,20 +11,26 @@ object GameManager {
     private val games = ConcurrentHashMap<String, Game>()
 
     // create a new game and add the player (create an unique ID too)
-    fun createGame(session: DefaultWebSocketServerSession, name : String): String {
+    suspend fun createGame(session: DefaultWebSocketServerSession, name : String): String {
         val gameId = UUID.randomUUID().toString()
-        var player = Player(name = name, session = session)
+        val playerId = UUID.randomUUID().toString().substring(0, 8)
+        var player = Player(name = name, session = session, id = playerId)
+        print(playerId + "\n")
         val game = Game(gameId, mutableListOf(player))
         games[gameId] = game
+        session.send(playerId)
         return gameId
     }
 
     // add player to game 
-    fun joinGame(gameId: String, session: DefaultWebSocketServerSession, name : String): Boolean {
-        var player = Player(name = name, session = session)
+    suspend fun joinGame(gameId: String, session: DefaultWebSocketServerSession, name : String): Boolean {
+        val playerId = UUID.randomUUID().toString().substring(0, 8)
+        var player = Player(name = name, session = session, id = playerId)
+        print(playerId + "\n")
         val game = games[gameId] ?: return false // if game[gameId] is null return false (not found or something)
         if (game.playerList.isEmpty() || game.started == true) return false // Game is gone
         game.playerList.add(player)
+        session.send(playerId)
         return true
     }
 

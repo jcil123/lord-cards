@@ -13,8 +13,10 @@ class Game (
     private val incomingQueue = ConcurrentLinkedQueue<String>() // messages received
     private val outgoingQueue = ConcurrentLinkedQueue<String>() // messages sent
 
-
     fun addReceivedMessage(message : String) {
+        if (message == "start") {
+            println("STARTED BY ")
+        }
         incomingQueue.add(message)
     }
 

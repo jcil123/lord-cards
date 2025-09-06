@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minimal WebSocket Test</title>
+</head>
+<body>
+  <h1>WebSocket Test</h1>
+
+  <input id="nameInput" placeholder="Enter your name" />
+  <button id="connectBtn">Connect</button>
+
+  <input id="messageInput" placeholder="Type message" />
+  <button id="sendBtn" disabled>Send</button>
+
+  <ul id="messages"></ul>
+
+  <script>
+    let ws;
+    const messagesList = document.getElementById("messages");
+    const nameInput = document.getElementById("nameInput");
+    const connectBtn = document.getElementById("connectBtn");
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    connectBtn.onclick = () => {
+      const name = encodeURIComponent(nameInput.value || "Anonymous");
+      // Replace with your actual Zrok URL
+      const url = "ws://localhost:8080/lords/game?name=" + name;
+
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        messagesList.innerHTML += "<li>Connected!</li>";
+        sendBtn.disabled = false;
+      };
+
+      ws.onmessage = (event) => {
+        const li = document.createElement("li");
+        li.textContent = event.data;
+        messagesList.appendChild(li);
+      };
+
+      ws.onclose = () => {
+        messagesList.innerHTML += "<li>Connection closed</li>";
+        sendBtn.disabled = true;
+      };
+
+      ws.onerror = (err) => {
+        messagesList.innerHTML += `<li style="color:red">Error: ${err.message}</li>`;
+      };
+    };
+
+    sendBtn.onclick = () => {
+      const msg = messageInput.value;
+      if (msg && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(msg);
+        messageInput.value = "";
+      }
+    };
+  </script>
+</body>
+</html>
+<!-- <!DOCTYPE html>
+<html>
+  <head>
+    <title>nombre del juegillo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        font-family: sans-serif;
+        background: #1b2428;
+        color: white;
+      }
+
+      .counter {
+        border-style: solid;
+        border-color: #4e676a;
+        border-radius: 5px;
+        font-size: 14pt;
+        padding: 1.5px;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 150px;
+        height: 50px;
+      }
+
+      .info_button {
+        border-style: solid;
+        border-color: #4e676a;
+        border-radius: 5px;
+        font-size: 14pt;
+        padding: 1.5px;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 150px;
+        height: 50px;
+      }
+
+      .lore {
+        border-style: solid;
+        border-color: #4e676a;
+        border-radius: 5px;
+        font-size: 14pt;
+        padding: 1.5px;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 20px;
+        left: 200px;
+        width: 100px;
+        height: 50px;
+      }
+
+      .about {
+        border-style: solid;
+        border-color: #4e676a;
+        border-radius: 5px;
+        font-size: 14pt;
+        padding: 1.5px;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 20px;
+        left: 330px;
+        width: 100px;
+        height: 50px;
+      }
+
+      .title {
+        position: absolute;
+        top: 9%;
+        width: 100%;
+        text-align: center;
+        font-size: 30px;
+      }
+
+      .deck {
+        border-style: solid;
+        border-width: 3px;
+        border-color: #a1ede1;
+        border-radius: 10px;
+        background: #4e676a;
+        box-sizing: border-box;
+        position: absolute;
+        bottom: 20px;
+        left: 100px;
+        width: 200px;
+        height: 300px;
+      }
+
+      .player {
+        border-style: solid;
+        border-width: 3px;
+        border-color: #a1ede1;
+        border-radius: 10px;
+        background: #4e676a;
+        box-sizing: border-box;
+        position: absolute;
+        bottom: 20px;
+        right: 100px;
+        width: 200px;
+        height: 300px;
+      }
+
+      .username {
+        border-style: solid;
+        border-width: 3px;
+        border-color: #a1ede1;
+        border-radius: 10px;
+        background: #4e676a;
+        box-sizing: border-box;
+        position: absolute;
+        bottom: 335px;
+        right: 100px;
+        width: 200px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .stats {
+        border-style: solid;
+        border-width: 3px;
+        border-color: #a1ede1;
+        border-radius: 10px;
+        background: #4e676a;
+        box-sizing: border-box;
+        position: absolute;
+        bottom: 20px;
+        right: 280px;
+        width: 250px;
+        height: 250px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: -1;
+      }
+
+      .cards_container {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        bottom: 175px;
+        left: 300px;
+        right: 300px;
+        widht: 600px;
+        height: 200px;
+      }
+
+      .card {
+        position: absolute;
+        border-style: solid;
+        border-width: 3px;
+        border-color: #a1ede1;
+        box-sizing: border-box;
+        background: #4e676a;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px #ebebdc;
+        justify-content: center;
+        width: 200px;
+        height: 300px;
+        transform-origin: bottom center;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.3s ease;
+      }
+
+      .c1 {
+        transform: rotate(-30deg) translateX(-120px);
+      }
+
+      .c2 {
+        transform: rotate(-15deg) translateX(-60px);
+      }
+      .c3 {
+        transform: rotate(0deg);
+      }
+      .c4 {
+        transform: rotate(15deg) translateX(60px);
+      }
+      .c5 {
+        transform: rotate(30deg) translateX(120px);
+      }
+
+      .c1:hover {
+        transform: rotate(-30deg) translateX(-120px) translateY(-30px)
+          scale(1.25);
+        z-index: 10;
+      }
+
+      .c2:hover {
+        transform: rotate(-15deg) translateX(-60px) translateY(-30px)
+          scale(1.25);
+        z-index: 10;
+      }
+
+      .c3:hover {
+        transform: rotate(0deg) translateY(-30px) scale(1.25);
+        z-index: 10;
+      }
+
+      .c4:hover {
+        transform: rotate(15deg) translateX(60px) translateY(-30px) scale(1.25);
+        z-index: 10;
+      }
+
+      .c5:hover {
+        transform: rotate(30deg) translateX(120px) translateY(-30px) scale(1.25);
+        z-index: 10;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="counter">Online Players</div>
+    <div class="info_button">Game Info</div>
+    <div class="lore">Lore</div>
+    <div class="about">About</div>
+    <div class="title">Game Title</div>
+    <div class="deck">Deck</div>
+    <div class="player">Character</div>
+    <div class="username">Username</div>
+    <div class="stats">Stats</div>
+    <div class="cards_container">
+      <div class="card c1">Card 1</div>
+      <div class="card c2">Card 2</div>
+      <div class="card c3">Card 3</div>
+      <div class="card c4">Card 4</div>
+      <div class="card c5">Card 5</div>
+    </div>
+  </body>
+</html> -->
