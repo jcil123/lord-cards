@@ -34,12 +34,12 @@ class Game (
         turnJob = CoroutineScope(Dispatchers.Default).launch {
             currentTurn = 1
             while (isActive && playerList.isNotEmpty()) {
-                broadcast("Turn $currentTurn started! You have ${GameConstants.TURN_DURATION_SECS/1000} seconds.")
+                // broadcast("Turn $currentTurn started! You have ${GameConstants.TURN_DURATION_SECS/1000} seconds.")
                 // wait for players to make their moves
                 delay(GameConstants.TURN_DURATION_SECS)
                 // process all moves received during this turn
                 processTurn() //TODO: implement turns
-                broadcast("Turn $currentTurn ended.")
+                // broadcast("Turn $currentTurn ended.")
                 currentTurn++
             }
         }
@@ -50,33 +50,36 @@ class Game (
         started = false
     }
 
-    private suspend fun broadcast(message: String) {
+    private suspend fun broadcast(message: GameMessage) {
+        val msg = Json.encodeToString(message)
         for (player in playerList) {
-            player.session.send(Frame.Text(message))
+            player.session.send(Frame.Text(msg))
         }
     }
 
-    private suspend fun registerStartVote(msg: GameMessage) {
-        voteSet.put(msg.sender, true)
-        if (voteSet.size >= (playerList.size)/2 && playerList.size >= GameConstants.MIN_PLAYERS) {
-            startGame()
-        } else {
-            broadcast("Waiting for enough players to start ...")
-        }
-    }
+    // private suspend fun registerStartVote(msg: GameMessage) {
+    //     voteSet.put(msg.sender, true)
+    //     if (voteSet.size >= (playerList.size)/2 && playerList.size >= GameConstants.MIN_PLAYERS) {
+    //         startGame()
+    //     } else {
+    //         broadcast("Waiting for enough players to start ...")
+    //     }
+    // }
 
     private fun processTurn() {
         // TODO: pull moves from a queue, resolve them, update state
         println("Processing turn...")
     }
 
-    suspend fun addReceivedMessage(message : String) {
-        val msg = Json.decodeFromString<GameMessage>(message)
-        when (msg) {
-            is VoteMessage -> broadcast("Player ${msg.sender} voted start")
-            is ChatMessage -> broadcast("${msg.sender}t: ${msg.text}")
-            is PlayMessage -> broadcast("${msg.sender} played: ${msg.description}")
-            is RoleAbilityMessage -> broadcast("${msg.sender} used role: ${msg.description}")
+    suspend fun addReceivedMessage(message : GameMessage) {
+        when (message) {
+            // TODO: FIX THIS SHIT
+            is CreateGameMessage -> broadcast(message)
+            is VoteMessage -> broadcast(message)
+            is JoinMessage -> broadcast(message)
+            is ChatMessage -> broadcast(message)
+            is PlayMessage -> broadcast(message)
+            is RoleAbilityMessage -> broadcast(message)
         }
     }
 

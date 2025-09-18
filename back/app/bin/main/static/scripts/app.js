@@ -1,6 +1,7 @@
 let ws = null;
 let playerName = "";
 let currentGameId = null;
+let playerId = ""
 
 function showPage(pageId) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -27,7 +28,7 @@ function joinGame() {
 }
 
 // --- Waiting room + chat ---
-function connect(path, expectServerToCreateGame = false) {
+function connect(path, creatingGame = false) {
   // Close previous socket if any
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
     ws.close();
@@ -48,21 +49,32 @@ function connect(path, expectServerToCreateGame = false) {
 
   ws.onmessage = (event) => {
     const chatBox = document.getElementById("chatBox");
-    // If server sends a message like "Game created with id: <id>" capture it:
-    const text = event.data;
-    chatBox.innerHTML += `<div>${escapeHtml(text)}</div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
+    const msg = JSON.parse(event.data);
 
-    if (expectServerToCreateGame) {
-      // attempt to parse an ID in a common "Game created with id: <id>" format
-      const m = text.match(/id[: ]+([A-Za-z0-9_-]{4,})/i);
-      if (m) {
-        currentGameId = m[1];
-        // optionally show the ID to user (alert or copy to clipboard)
+    switch (msg.type) {
+      case "Join":
+        playerId = msg.playerId;
+        console.log("My playerId:", playerId);
+        break;
+
+      case "Create":
+        currentGameId = msg.gameId;
+        playerId = msg.playerId; // also assign the playerId here
         alert(`Game created: ${currentGameId} (share this id with others)`);
-      }
+        console.log("My playerId:", playerId);
+        console.log("My gameId:", gameId);
+        break;
+
+      case "Chat":
+        chatBox.innerHTML += `<div>${escapeHtml(msg.text)}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        break;
+
+      default:
+        console.log("Unknown message:", msg);
     }
   };
+
 
   ws.onclose = () => {
     console.log("🔌 Disconnected");
@@ -82,7 +94,13 @@ function sendChat() {
   const message = input.value.trim();
   if (message && ws && ws.readyState === WebSocket.OPEN) {
     // send plain text chat; you can switch to JSON later
-    ws.send(`${playerName}: ${message}`);
+      var msg = {
+        type: "Chat",
+        sender: playerId,
+        senderName: playerName,
+        text: message
+      }
+    ws.send(JSON.stringify(msg));
     input.value = "";
   }
 }
@@ -90,6 +108,16 @@ function sendChat() {
 function backToLogin() {
   if (ws) ws.close();
   showPage("loginPage");
+}
+
+function voteStart() {
+  var vote = {
+    type : "VoteStart",
+    sender: playerId
+  }
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(vote));
+  }
 }
 
 // tiny helper to avoid XSS in chat display

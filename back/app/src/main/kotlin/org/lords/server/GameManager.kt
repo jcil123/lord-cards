@@ -5,8 +5,11 @@ import io.ktor.websocket.*
 import io.ktor.http.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.UUID
-import org.lords.game.Game
-import org.lords.game.Player
+import kotlinx.serialization.json.Json
+// import org.lords.game.Game
+// import org.lords.game.Player
+
+import org.lords.game.*
 
 object GameManager {
     // map of gameId, list of active games
@@ -20,7 +23,12 @@ object GameManager {
         print(playerId + "\n")
         val game = Game(gameId, mutableListOf(player))
         games[gameId] = game
-        session.send(playerId)
+        // send the info to the player and then, to everyone
+        val msg = CreateGameMessage(playerId,name,gameId,playerId)
+        val chat = ChatMessage(playerId,name,"$name created game with id: $gameId")
+        val response = Json.encodeToString<GameMessage>(msg)
+        session.send(Frame.Text(response))
+        receiveMessage(gameId,chat)
         return gameId
     }
 
@@ -32,35 +40,15 @@ object GameManager {
         val game = games[gameId] ?: return false // if game[gameId] is null return false (not found or something)
         if (game.playerList.isEmpty() || game.started == true) return false // Game is gone
         game.playerList.add(player)
-        session.send(playerId)
+
+        // TODO: ADD LOGIC WHEN JOINING GAME LIKE ABOVE
+
         return true
     }
 
-    suspend fun broadcastTest(gameId: String, message: Frame) {
+    suspend fun receiveMessage(gameId: String, message: GameMessage) {
         val game = games[gameId] ?: return
-        // only handle text/JSON frames
-        val text = when (message) {
-            is Frame.Text -> message.readText()
-            else -> return  // ignore anything else but text/JSON
-        }
-        println("Received message: $text")
-        for (player in game.playerList) {
-            try {
-                player.session.send(Frame.Text(text))
-            } catch (e: Exception) {
-                e.printStackTrace()
-                // Optional: remove player if disconnected
-            }
-        }
-    }
-
-    suspend fun receiveMessage(gameId: String, message: Frame) {
-        val game = games[gameId] ?: return
-        val text = when (message) {
-            is Frame.Text -> message.readText()
-            else -> return  // ignore anything else but text/JSON
-        }
-        game.addReceivedMessage(text)
+        game.addReceivedMessage(message)
     }
 
 

@@ -14,6 +14,10 @@ import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import org.slf4j.event.*
 
+import kotlinx.serialization.json.Json
+
+import org.lords.game.*
+
 fun Application.configureRouting() {
     routing {
         
@@ -23,11 +27,13 @@ fun Application.configureRouting() {
             // create a game
             val name = call.request.queryParameters["name"] ?: "Anonymous"
             val id = GameManager.createGame(this, name)
-            // TODO: REMOVE THIS TEST
-            GameManager.broadcastTest(id,(Frame.Text("$name created game with id: $id")))
             try {
                 for (frame in incoming) {
-                    GameManager.receiveMessage(id,frame)
+                    if (frame is Frame.Text) {
+                        val text = frame.readText()
+                        val msg = Json.decodeFromString<GameMessage>(text)
+                        GameManager.receiveMessage(id, msg)
+                    }
                 }
             } finally {
                 GameManager.removeSession(id, this)
@@ -40,11 +46,15 @@ fun Application.configureRouting() {
             val name = call.request.queryParameters["name"] ?: "Anonymous"
             val success = GameManager.joinGame(id, this, name)
             if (success) {
-                // TODO: REMOVE THIS TEST
-                GameManager.broadcastTest(id,(Frame.Text("$name joined game $id")))
+                // // TODO: REMOVE THIS TEST
+                // GameManager.broadcastTest(id,(Frame.Text("$name joined game $id")))
                 try {
                     for (frame in incoming) {
-                        GameManager.receiveMessage(id,frame)
+                        if (frame is Frame.Text) {
+                            val text = frame.readText()
+                            val msg = Json.decodeFromString<GameMessage>(text)
+                            GameManager.receiveMessage(id, msg)
+                        }
                     }
                 } finally {
                     GameManager.removeSession(id, this)
