@@ -16,23 +16,18 @@ import org.slf4j.event.*
 
 fun Application.configureRouting() {
     routing {
-
-        get("/") {
-            call.respondText(
-                this::class.java.classLoader.getResource("index.html")!!.readText(),
-                contentType = io.ktor.http.ContentType.Text.Html
-            )
-        }
+        
+        staticResources("/", "static", index = "index.html") //serves everything, and index is in /lords
 
         webSocket("/lords/game") {
             // create a game
             val name = call.request.queryParameters["name"] ?: "Anonymous"
             val id = GameManager.createGame(this, name)
-            send(Frame.Text("$name created game with id: $id"))
+            // TODO: REMOVE THIS TEST
+            GameManager.broadcastTest(id,(Frame.Text("$name created game with id: $id")))
             try {
                 for (frame in incoming) {
-                    // TODO: receivePlay2 is just for testing
-                    GameManager.receivePlay2(id,frame)
+                    GameManager.receiveMessage(id,frame)
                 }
             } finally {
                 GameManager.removeSession(id, this)
@@ -45,11 +40,11 @@ fun Application.configureRouting() {
             val name = call.request.queryParameters["name"] ?: "Anonymous"
             val success = GameManager.joinGame(id, this, name)
             if (success) {
-                send(Frame.Text("$name joined game $id"))
+                // TODO: REMOVE THIS TEST
+                GameManager.broadcastTest(id,(Frame.Text("$name joined game $id")))
                 try {
                     for (frame in incoming) {
-                        // TODO: receivePlay2 is just for testing
-                        GameManager.receivePlay2(id,frame)
+                        GameManager.receiveMessage(id,frame)
                     }
                 } finally {
                     GameManager.removeSession(id, this)

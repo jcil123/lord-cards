@@ -5,14 +5,16 @@ import io.ktor.websocket.*
 import io.ktor.http.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.UUID
+import org.lords.game.Game
+import org.lords.game.Player
 
 object GameManager {
-    // Map of gameId, list of active games
+    // map of gameId, list of active games
     private val games = ConcurrentHashMap<String, Game>()
 
     // create a new game and add the player (create an unique ID too)
     suspend fun createGame(session: DefaultWebSocketServerSession, name : String): String {
-        val gameId = UUID.randomUUID().toString()
+        val gameId = UUID.randomUUID().toString().substring(0, 5) // size of substring for game
         val playerId = UUID.randomUUID().toString().substring(0, 8)
         var player = Player(name = name, session = session, id = playerId)
         print(playerId + "\n")
@@ -34,7 +36,7 @@ object GameManager {
         return true
     }
 
-    suspend fun receivePlay2(gameId: String, message: Frame) {
+    suspend fun broadcastTest(gameId: String, message: Frame) {
         val game = games[gameId] ?: return
         // only handle text/JSON frames
         val text = when (message) {
@@ -52,7 +54,7 @@ object GameManager {
         }
     }
 
-    suspend fun receivePlay(gameId: String, message: Frame) {
+    suspend fun receiveMessage(gameId: String, message: Frame) {
         val game = games[gameId] ?: return
         val text = when (message) {
             is Frame.Text -> message.readText()
@@ -62,7 +64,7 @@ object GameManager {
     }
 
 
-    // Removes a session and deletes the game if empty 
+    // removes a session and deletes the game if empty 
     fun removeSession(gameId: String, session: DefaultWebSocketServerSession) {
         val game = games[gameId] ?: return
         val player = game.playerList.find { it.session == session }
@@ -70,6 +72,7 @@ object GameManager {
             game.playerList.remove(player)
         }
         if (game.playerList.isEmpty()) {
+            game.endGame() // stop the game when it is empty
             games.remove(gameId)
         }
     }

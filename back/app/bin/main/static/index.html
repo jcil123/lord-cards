@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lords Game - Test SPA</title>
+  <style>
+    body { font-family: sans-serif; }
+    .page { display: none; }
+    .active { display: block; }
+    #chatBox { border: 1px solid #ccc; height: 200px; overflow-y: auto; padding: 5px; margin-bottom: 10px; }
+    label { display:block; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="loginPage" class="page active">
+    <h1>Login</h1>
+    <label>
+      Name:
+      <input id="playerName" placeholder="Enter your name" />
+    </label>
+
+    <hr />
+
+    <button onclick="createGame()">Create Game</button>
+
+    <hr />
+
+    <label>
+      Game ID to join:
+      <input id="gameId" placeholder="Enter game id" />
+    </label>
+    <button onclick="joinGame()">Join Game</button>
+  </div>
+
+  <!-- Waiting Room -->
+  <div id="waitingPage" class="page">
+    <h1>Waiting Room</h1>
+    <div id="chatBox"></div>
+    <input id="chatInput" placeholder="Type a message" />
+    <button onclick="sendChat()">Send</button>
+    <br /><br />
+    <button onclick="backToLogin()">Leave Room</button>
+  </div>
+
+  <script src="scripts/app.js"></script>
+</body>
+</html>

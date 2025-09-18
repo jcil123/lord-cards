@@ -1,4 +1,4 @@
-package org.lords.server
+package org.lords.game
 
 import io.ktor.server.websocket.*
 
